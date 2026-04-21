@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>退休資產計算器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: oklch(98.5% 0.004 85);
+    --bg-sunk: oklch(96% 0.006 85);
+    --ink: oklch(22% 0.02 180);
+    --ink-soft: oklch(40% 0.015 180);
+    --ink-muted: oklch(60% 0.01 180);
+    --rule: oklch(88% 0.008 180);
+    --rule-soft: oklch(93% 0.006 180);
+    --accent: oklch(55% 0.12 185);
+    --accent-soft: oklch(92% 0.04 185);
+    --amber: oklch(65% 0.13 70);
+    --amber-soft: oklch(94% 0.04 70);
+    --crimson: oklch(55% 0.14 25);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  .app {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ===== LEFT PANEL ===== */
+  .panel {
+    background: var(--bg-sunk);
+    border-right: 1px solid var(--rule);
+    padding: 28px 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 24px;
+  }
+  .brand-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    font-variation-settings: "opsz" 144;
+  }
+  .brand-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .slider-group {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .slider-group:last-of-type { border-bottom: none; }
+  .slider-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .slider-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  .slider-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 20px;
+    font-variation-settings: "opsz" 144;
+    letter-spacing: -0.01em;
+  }
+  .slider-value .unit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-weight: 400;
+    margin-left: 4px;
+    letter-spacing: 0;
+  }
+
+  /* Custom slider */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--rule);
+    outline: none;
+    border-radius: 1px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--bg-sunk);
+    box-shadow: 0 0 0 1px var(--ink);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--bg-sunk);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+  .slider-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+  }
+
+  .footer-note {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+  }
+
+  /* ===== RIGHT PANEL ===== */
+  .canvas {
+    padding: 28px 36px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .canvas-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 20px;
+  }
+  .headline {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    color: var(--ink-muted);
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+  }
+  .big-number {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 56px;
+    font-variation-settings: "opsz" 144;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .big-number .unit-big {
+    font-size: 24px;
+    color: var(--ink-muted);
+    margin-left: 8px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  .headline-right {
+    text-align: right;
+    display: flex;
+    gap: 40px;
+  }
+  .stat {
+    text-align: right;
+  }
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 22px;
+    font-variation-settings: "opsz" 144;
+    letter-spacing: -0.01em;
+  }
+  .stat-value .unit { font-size: 12px; color: var(--ink-muted); margin-left: 3px; }
+
+  .chart-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    margin-bottom: 16px;
+  }
+  svg.chart { width: 100%; height: 100%; display: block; }
+
+  /* Legend / Milestone table */
+  .legend-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+  .legend-col h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+  }
+  .dot-accent { background: var(--accent); }
+  .dot-amber { background: var(--amber); }
+  .milestone-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+  .mile {
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--rule-soft);
+  }
+  .mile-target {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .mile-val {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 16px;
+    font-variation-settings: "opsz" 144;
+    letter-spacing: -0.01em;
+  }
+  .mile-val.muted { color: var(--ink-muted); font-style: italic; font-size: 13px; }
+  .mile-val .sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    font-weight: 400;
+    margin-left: 3px;
+  }
+
+  /* Chart elements */
+  .grid-line { stroke: var(--rule-soft); stroke-width: 1; }
+  .axis-line { stroke: var(--rule); stroke-width: 1; }
+  .area-fill { fill: var(--accent); opacity: 0.08; }
+  .principal-fill { fill: var(--ink); opacity: 0.06; }
+  .curve { fill: none; stroke: var(--ink); stroke-width: 2; }
+  .principal-curve { fill: none; stroke: var(--ink-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+  .axis-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    fill: var(--ink-muted);
+  }
+  .milestone-line { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 3; }
+  .milestone-dot { fill: var(--accent); }
+  .milestone-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    fill: var(--accent);
+    font-weight: 500;
+  }
+  .age-line { stroke: var(--amber); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.7; }
+  .age-dot { fill: var(--amber); stroke: var(--bg); stroke-width: 2; }
+  .age-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    fill: var(--amber);
+    font-weight: 500;
+  }
+  .retire-marker { stroke: var(--crimson); stroke-width: 1.5; }
+  .retire-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    fill: var(--crimson);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  /* Tweaks panel */
+  .tweaks {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 260px;
+    background: var(--bg);
+    border: 1px solid var(--ink);
+    padding: 16px;
+    display: none;
+    z-index: 100;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
+  }
+  .tweaks.on { display: block; }
+  .tweaks h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tweak-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 12px;
+  }
+  .tweak-row label { color: var(--ink-soft); }
+  .tweak-row select, .tweak-row input[type="color"] {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 2px 6px;
+    border: 1px solid var(--rule);
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .tweak-row input[type="color"] { width: 40px; height: 22px; padding: 0; cursor: pointer; }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--rule);
+  }
+  .seg button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ink-muted);
+  }
+  .seg button.on { background: var(--ink); color: var(--bg); }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- LEFT: CONTROLS -->
+  <aside class="panel">
+    <div class="brand">
+      <div>
+        <div class="brand-title">退休資產計算器</div>
+        <div class="brand-sub" style="margin-top:4px;">Retirement Wealth Projection</div>
+      </div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-head">
+        <span class="slider-label">目前年齡</span>
+        <span class="slider-value"><span id="v-age">35</span><span class="unit">歲</span></span>
+      </div>
+      <input type="range" id="s-age" min="20" max="60" value="35" step="1">
+      <div class="slider-scale"><span>20</span><span>40</span><span>60</span></div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-head">
+        <span class="slider-label">現有資產</span>
+        <span class="slider-value"><span id="v-assets">100</span><span class="unit">萬</span></span>
+      </div>
+      <input type="range" id="s-assets" min="0" max="1000" value="100" step="10">
+      <div class="slider-scale"><span>0</span><span>500萬</span><span>1000萬</span></div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-head">
+        <span class="slider-label">每月投資</span>
+        <span class="slider-value"><span id="v-monthly">3</span><span class="unit">萬 / 月</span></span>
+      </div>
+      <input type="range" id="s-monthly" min="0" max="100" value="3" step="0.5">
+      <div class="slider-scale"><span>0</span><span>50萬</span><span>100萬</span></div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-head">
+        <span class="slider-label">年化投資報酬率</span>
+        <span class="slider-value"><span id="v-return">8.0</span><span class="unit">%</span></span>
+      </div>
+      <input type="range" id="s-return" min="2" max="20" value="8" step="0.1">
+      <div class="slider-scale"><span>2%</span><span>11%</span><span>20%</span></div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-head">
+        <span class="slider-label">退休年齡</span>
+        <span class="slider-value"><span id="v-retire">65</span><span class="unit">歲</span></span>
+      </div>
+      <input type="range" id="s-retire" min="50" max="75" value="65" step="1">
+      <div class="slider-scale"><span>50</span><span>62</span><span>75</span></div>
+    </div>
+
+    <div class="footer-note">
+      // 假設報酬率為固定年化複利，每月投入以月複利計算<br>
+      // 通膨與稅負未納入模型<br>
+      // 本試算僅供規劃參考
+    </div>
+  </aside>
+
+  <!-- RIGHT: CHART -->
+  <main class="canvas">
+    <div class="canvas-head">
+      <div>
+        <div class="headline">退休時預估資產 · Projected Assets at Retirement</div>
+        <div class="big-number"><span id="retire-amount">—</span><span class="unit-big" id="retire-unit">萬</span></div>
+      </div>
+      <div class="headline-right">
+        <div class="stat">
+          <div class="stat-label">本金投入</div>
+          <div class="stat-value"><span id="principal">—</span><span class="unit">萬</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">投資獲利</div>
+          <div class="stat-value"><span id="gain">—</span><span class="unit">萬</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">累積倍數</div>
+          <div class="stat-value"><span id="multiple">—</span><span class="unit">×</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <svg class="chart" id="chart" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="legend-row">
+      <div class="legend-col">
+        <h4><span class="legend-dot dot-accent"></span>資產里程碑 — 達成時間點</h4>
+        <div class="milestone-list" id="milestones"></div>
+      </div>
+      <div class="legend-col">
+        <h4><span class="legend-dot dot-amber"></span>年齡節點 — 屆齡資產</h4>
+        <div class="milestone-list" id="age-points"></div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- TWEAKS -->
+<div class="tweaks" id="tweaks">
+  <h3>Tweaks</h3>
+  <div class="tweak-row">
+    <label>強調色</label>
+    <div class="seg" id="accent-seg">
+      <button data-hue="185" class="on">青綠</button>
+      <button data-hue="250">靛藍</button>
+      <button data-hue="25">緋紅</button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <label>圖表樣式</label>
+    <div class="seg" id="chart-seg">
+      <button data-mode="area" class="on">面積</button>
+      <button data-mode="line">線條</button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <label>顯示本金線</label>
+    <div class="seg" id="principal-seg">
+      <button data-show="1" class="on">顯示</button>
+      <button data-show="0">隱藏</button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <label>Y 軸刻度</label>
+    <div class="seg" id="scale-seg">
+      <button data-scale="linear" class="on">線性</button>
+      <button data-scale="log">對數</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentHue": 185,
+  "chartMode": "area",
+  "showPrincipal": 1,
+  "yScale": "linear"
+}/*EDITMODE-END*/;
+
+let tweaks = {...TWEAK_DEFAULTS};
+
+// ============== CALCULATION ==============
+function simulate(age, assets0, monthly, ratePct, retireAge) {
+  // assets0: 萬, monthly: 萬/月, rate: annual %
+  // monthly compounding
+  const r = ratePct / 100 / 12;
+  const points = []; // {age, value (萬), principalOnly (萬)}
+  let value = assets0;
+  let principal = assets0;
+  points.push({age: age, value, principal, month: 0});
+
+  // Simulate up to max(retireAge+5, 80) for the chart tail
+  const endAge = Math.max(retireAge + 5, 80);
+  const totalMonths = Math.round((endAge - age) * 12);
+
+  for (let m = 1; m <= totalMonths; m++) {
+    value = value * (1 + r) + monthly;
+    principal = principal + monthly;
+    if (m % 1 === 0) {
+      points.push({
+        age: age + m / 12,
+        value,
+        principal,
+        month: m
+      });
+    }
+  }
+  return points;
+}
+
+function findAgeAtTarget(points, target) {
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].value >= target && points[i-1].value < target) {
+      // linear interp
+      const p0 = points[i-1], p1 = points[i];
+      const t = (target - p0.value) / (p1.value - p0.value);
+      return p0.age + t * (p1.age - p0.age);
+    }
+  }
+  return null;
+}
+
+function valueAtAge(points, targetAge) {
+  if (targetAge < points[0].age) return null;
+  if (targetAge > points[points.length-1].age) return null;
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].age >= targetAge) {
+      const p0 = points[i-1], p1 = points[i];
+      const t = (targetAge - p0.age) / (p1.age - p0.age);
+      return p0.value + t * (p1.value - p0.value);
+    }
+  }
+  return null;
+}
+
+// ============== FORMATTING ==============
+function formatWan(val) {
+  // val in 萬
+  if (val >= 10000) return { num: (val/10000).toFixed(2), unit: '億' };
+  if (val >= 1000) return { num: val.toFixed(0), unit: '萬' };
+  return { num: val.toFixed(1), unit: '萬' };
+}
+
+function formatAge(age) {
+  if (age == null) return null;
+  const years = Math.floor(age);
+  const months = Math.round((age - years) * 12);
+  return { years, months };
+}
+
+// ============== RENDER ==============
+const MILESTONES = [
+  { val: 1000, label: '1000萬' },
+  { val: 3000, label: '3000萬' },
+  { val: 5000, label: '5000萬' },
+  { val: 10000, label: '1億' }
+];
+const AGE_POINTS = [40, 50, 60];
+
+function render() {
+  const age = +document.getElementById('s-age').value;
+  const assets0 = +document.getElementById('s-assets').value;
+  const monthly = +document.getElementById('s-monthly').value;
+  const ratePct = +document.getElementById('s-return').value;
+  const retireAge = +document.getElementById('s-retire').value;
+
+  document.getElementById('v-age').textContent = age;
+  document.getElementById('v-assets').textContent = assets0;
+  document.getElementById('v-monthly').textContent = monthly.toFixed(monthly % 1 === 0 ? 0 : 1);
+  document.getElementById('v-return').textContent = ratePct.toFixed(1);
+  document.getElementById('v-retire').textContent = retireAge;
+
+  // ensure retire > age
+  if (retireAge <= age) {
+    document.getElementById('s-retire').min = Math.max(50, age + 1);
+  }
+
+  const points = simulate(age, assets0, monthly, ratePct, retireAge);
+  const retireValue = valueAtAge(points, retireAge) || 0;
+  const retireFmt = formatWan(retireValue);
+  document.getElementById('retire-amount').textContent = retireFmt.num;
+  document.getElementById('retire-unit').textContent = retireFmt.unit;
+
+  // Principal / gain at retirement
+  const retireIndex = Math.round((retireAge - age) * 12);
+  const retirePrincipal = points[retireIndex] ? points[retireIndex].principal : 0;
+  const gain = retireValue - retirePrincipal;
+  const pFmt = formatWan(retirePrincipal);
+  const gFmt = formatWan(gain);
+  document.getElementById('principal').textContent = pFmt.num;
+  document.getElementById('gain').textContent = gFmt.num;
+  document.querySelector('#principal + .unit').textContent = pFmt.unit;
+  document.querySelector('#gain + .unit').textContent = gFmt.unit;
+
+  const multiple = retirePrincipal > 0 ? (retireValue / retirePrincipal).toFixed(2) : '—';
+  document.getElementById('multiple').textContent = multiple;
+
+  drawChart(points, age, retireAge);
+  drawMilestones(points, age);
+  drawAgePoints(points, age);
+}
+
+function drawChart(points, startAge, retireAge) {
+  const svg = document.getElementById('chart');
+  const rect = svg.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+  const M = { top: 24, right: 24, bottom: 36, left: 64 };
+  const plotW = W - M.left - M.right;
+  const plotH = H - M.top - M.bottom;
+
+  const endAge = points[points.length-1].age;
+  const maxVal = Math.max(...points.map(p => p.value), 1000);
+  // round max up to nice number
+  const niceMax = niceCeil(maxVal * 1.05);
+
+  const isLog = tweaks.yScale === 'log';
+  const minLog = 10; // min 10萬 for log
+  const logMin = Math.log10(minLog);
+  const logMax = Math.log10(niceMax);
+
+  function x(age) { return M.left + (age - startAge) / (endAge - startAge) * plotW; }
+  function y(val) {
+    if (isLog) {
+      const v = Math.max(val, minLog);
+      return M.top + plotH - (Math.log10(v) - logMin) / (logMax - logMin) * plotH;
+    }
+    return M.top + plotH - val / niceMax * plotH;
+  }
+
+  // build SVG
+  let html = '';
+
+  // Y grid lines
+  const yTicks = isLog
+    ? niceLogTicks(minLog, niceMax)
+    : niceTicks(0, niceMax, 6);
+  yTicks.forEach(t => {
+    const yy = y(t);
+    html += `<line class="grid-line" x1="${M.left}" y1="${yy}" x2="${W-M.right}" y2="${yy}" />`;
+    const f = formatWan(t);
+    html += `<text class="axis-label" x="${M.left - 10}" y="${yy + 3}" text-anchor="end">${f.num}${f.unit}</text>`;
+  });
+
+  // X axis (ages)
+  const xTicks = [];
+  const step = (endAge - startAge) > 40 ? 10 : 5;
+  for (let a = Math.ceil(startAge/step)*step; a <= endAge; a += step) xTicks.push(a);
+  xTicks.forEach(t => {
+    const xx = x(t);
+    html += `<line class="grid-line" x1="${xx}" y1="${M.top}" x2="${xx}" y2="${H-M.bottom}" />`;
+    html += `<text class="axis-label" x="${xx}" y="${H-M.bottom+16}" text-anchor="middle">${t}歲</text>`;
+  });
+
+  // Axis lines
+  html += `<line class="axis-line" x1="${M.left}" y1="${H-M.bottom}" x2="${W-M.right}" y2="${H-M.bottom}" />`;
+  html += `<line class="axis-line" x1="${M.left}" y1="${M.top}" x2="${M.left}" y2="${H-M.bottom}" />`;
+
+  // Area fill (total)
+  if (tweaks.chartMode === 'area') {
+    let path = `M ${x(points[0].age)} ${H-M.bottom} `;
+    points.forEach(p => { path += `L ${x(p.age)} ${y(p.value)} `; });
+    path += `L ${x(points[points.length-1].age)} ${H-M.bottom} Z`;
+    html += `<path class="area-fill" d="${path}" />`;
+  }
+
+  // Principal dashed line + fill
+  if (tweaks.showPrincipal) {
+    if (tweaks.chartMode === 'area') {
+      let ppath = `M ${x(points[0].age)} ${H-M.bottom} `;
+      points.forEach(p => { ppath += `L ${x(p.age)} ${y(p.principal)} `; });
+      ppath += `L ${x(points[points.length-1].age)} ${H-M.bottom} Z`;
+      html += `<path class="principal-fill" d="${ppath}" />`;
+    }
+    let line = `M ${x(points[0].age)} ${y(points[0].principal)} `;
+    points.forEach(p => { line += `L ${x(p.age)} ${y(p.principal)} `; });
+    html += `<path class="principal-curve" d="${line}" />`;
+  }
+
+  // Main curve
+  let curve = `M ${x(points[0].age)} ${y(points[0].value)} `;
+  points.forEach(p => { curve += `L ${x(p.age)} ${y(p.value)} `; });
+  html += `<path class="curve" d="${curve}" />`;
+
+  // Retirement marker
+  const rx = x(retireAge);
+  const rVal = valueAtAge(points, retireAge);
+  html += `<line class="retire-marker" x1="${rx}" y1="${M.top}" x2="${rx}" y2="${H-M.bottom}" />`;
+  html += `<rect x="${rx-30}" y="${M.top-4}" width="60" height="16" fill="var(--bg)" stroke="var(--crimson)" />`;
+  html += `<text class="retire-label" x="${rx}" y="${M.top+7}" text-anchor="middle">退休 ${retireAge}歲</text>`;
+
+  // Milestones
+  MILESTONES.forEach(ms => {
+    const hitAge = findAgeAtTarget(points, ms.val);
+    if (hitAge == null) return;
+    const mx = x(hitAge), my = y(ms.val);
+    html += `<line class="milestone-line" x1="${mx}" y1="${my}" x2="${mx}" y2="${H-M.bottom}" />`;
+    html += `<circle class="milestone-dot" cx="${mx}" cy="${my}" r="4" />`;
+    html += `<circle cx="${mx}" cy="${my}" r="4" fill="none" stroke="var(--bg)" stroke-width="2" />`;
+    html += `<circle class="milestone-dot" cx="${mx}" cy="${my}" r="3" />`;
+    html += `<text class="milestone-label" x="${mx+8}" y="${my-4}">${ms.label}</text>`;
+  });
+
+  // Age points
+  AGE_POINTS.forEach(a => {
+    if (a <= startAge || a > endAge) return;
+    const val = valueAtAge(points, a);
+    if (val == null) return;
+    const ax = x(a), ay = y(val);
+    html += `<line class="age-line" x1="${ax}" y1="${ay}" x2="${ax}" y2="${H-M.bottom}" />`;
+    html += `<circle class="age-dot" cx="${ax}" cy="${ay}" r="4.5" />`;
+    const f = formatWan(val);
+    html += `<text class="age-label" x="${ax-8}" y="${ay-6}" text-anchor="end">${f.num}${f.unit}</text>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function drawMilestones(points, startAge) {
+  const container = document.getElementById('milestones');
+  let html = '';
+  MILESTONES.forEach(ms => {
+    const hitAge = findAgeAtTarget(points, ms.val);
+    html += `<div class="mile">`;
+    html += `<div class="mile-target">▸ ${ms.label}</div>`;
+    if (hitAge == null) {
+      html += `<div class="mile-val muted">未達</div>`;
+    } else {
+      const fa = formatAge(hitAge);
+      const yearsFromNow = hitAge - startAge;
+      html += `<div class="mile-val">${fa.years}<span class="sub">歲</span>${fa.months > 0 ? ` ${fa.months}<span class="sub">月</span>` : ''}</div>`;
+      html += `<div class="mile-target" style="margin-top:2px;">+${yearsFromNow.toFixed(1)} 年</div>`;
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+function drawAgePoints(points, startAge) {
+  const container = document.getElementById('age-points');
+  let html = '';
+  AGE_POINTS.forEach(a => {
+    html += `<div class="mile">`;
+    html += `<div class="mile-target">▸ ${a} 歲</div>`;
+    if (a < startAge) {
+      html += `<div class="mile-val muted">已過</div>`;
+    } else {
+      const val = valueAtAge(points, a);
+      if (val == null) {
+        html += `<div class="mile-val muted">—</div>`;
+      } else {
+        const f = formatWan(val);
+        html += `<div class="mile-val">${f.num}<span class="sub">${f.unit}</span></div>`;
+      }
+    }
+    html += `</div>`;
+  });
+  // Add retirement as 4th
+  const retireAge = +document.getElementById('s-retire').value;
+  const rVal = valueAtAge(points, retireAge);
+  html += `<div class="mile" style="border-color: var(--crimson); background: oklch(98% 0.02 25);">`;
+  html += `<div class="mile-target" style="color: var(--crimson);">▸ 退休 ${retireAge} 歲</div>`;
+  if (rVal == null) {
+    html += `<div class="mile-val muted">—</div>`;
+  } else {
+    const f = formatWan(rVal);
+    html += `<div class="mile-val">${f.num}<span class="sub">${f.unit}</span></div>`;
+  }
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// ============== UTILS ==============
+function niceCeil(v) {
+  if (v <= 0) return 100;
+  const exp = Math.floor(Math.log10(v));
+  const mag = Math.pow(10, exp);
+  const n = v / mag;
+  let nice;
+  if (n <= 1) nice = 1;
+  else if (n <= 2) nice = 2;
+  else if (n <= 2.5) nice = 2.5;
+  else if (n <= 5) nice = 5;
+  else nice = 10;
+  return nice * mag;
+}
+function niceTicks(min, max, count) {
+  const step = niceCeil((max-min)/count);
+  const ticks = [];
+  for (let t = 0; t <= max; t += step) ticks.push(t);
+  return ticks;
+}
+function niceLogTicks(minLog, max) {
+  const ticks = [];
+  const startExp = Math.floor(minLog);
+  const endExp = Math.ceil(Math.log10(max));
+  for (let e = startExp; e <= endExp; e++) {
+    const v = Math.pow(10, e);
+    if (v >= Math.pow(10, minLog) && v <= max) ticks.push(v);
+  }
+  return ticks;
+}
+
+// ============== EVENTS ==============
+['s-age','s-assets','s-monthly','s-return','s-retire'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+window.addEventListener('resize', render);
+
+// ============== TWEAKS ==============
+function applyTweaks() {
+  document.documentElement.style.setProperty('--accent', `oklch(55% 0.12 ${tweaks.accentHue})`);
+  document.documentElement.style.setProperty('--accent-soft', `oklch(92% 0.04 ${tweaks.accentHue})`);
+  // Update seg button states
+  document.querySelectorAll('#accent-seg button').forEach(b => b.classList.toggle('on', +b.dataset.hue === tweaks.accentHue));
+  document.querySelectorAll('#chart-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === tweaks.chartMode));
+  document.querySelectorAll('#principal-seg button').forEach(b => b.classList.toggle('on', +b.dataset.show === (tweaks.showPrincipal ? 1 : 0)));
+  document.querySelectorAll('#scale-seg button').forEach(b => b.classList.toggle('on', b.dataset.scale === tweaks.yScale));
+  render();
+}
+
+function setTweak(key, val) {
+  tweaks[key] = val;
+  applyTweaks();
+  try {
+    window.parent.postMessage({type: '__edit_mode_set_keys', edits: {[key === 'accentHue' ? 'accentHue' : key === 'chartMode' ? 'chartMode' : key === 'showPrincipal' ? 'showPrincipal' : 'yScale']: val}}, '*');
+  } catch(e) {}
+}
+
+document.querySelectorAll('#accent-seg button').forEach(b => b.addEventListener('click', () => setTweak('accentHue', +b.dataset.hue)));
+document.querySelectorAll('#chart-seg button').forEach(b => b.addEventListener('click', () => setTweak('chartMode', b.dataset.mode)));
+document.querySelectorAll('#principal-seg button').forEach(b => b.addEventListener('click', () => setTweak('showPrincipal', +b.dataset.show)));
+document.querySelectorAll('#scale-seg button').forEach(b => b.addEventListener('click', () => setTweak('yScale', b.dataset.scale)));
+
+window.addEventListener('message', (e) => {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === '__activate_edit_mode') document.getElementById('tweaks').classList.add('on');
+  if (e.data.type === '__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('on');
+});
+try { window.parent.postMessage({type: '__edit_mode_available'}, '*'); } catch(e) {}
+
+// ============== INIT ==============
+applyTweaks();
+render();
+</script>
+</body>
+</html>
