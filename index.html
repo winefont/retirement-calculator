@@ -522,12 +522,12 @@
 </div>
 
 <script>
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+const TWEAK_DEFAULTS = {
   "accentHue": 185,
   "chartMode": "area",
   "showPrincipal": 1,
   "yScale": "linear"
-}/*EDITMODE-END*/;
+};
 
 let tweaks = {...TWEAK_DEFAULTS};
 
@@ -873,9 +873,6 @@ function applyTweaks() {
 function setTweak(key, val) {
   tweaks[key] = val;
   applyTweaks();
-  try {
-    window.parent.postMessage({type: '__edit_mode_set_keys', edits: {[key === 'accentHue' ? 'accentHue' : key === 'chartMode' ? 'chartMode' : key === 'showPrincipal' ? 'showPrincipal' : 'yScale']: val}}, '*');
-  } catch(e) {}
 }
 
 document.querySelectorAll('#accent-seg button').forEach(b => b.addEventListener('click', () => setTweak('accentHue', +b.dataset.hue)));
@@ -883,12 +880,13 @@ document.querySelectorAll('#chart-seg button').forEach(b => b.addEventListener('
 document.querySelectorAll('#principal-seg button').forEach(b => b.addEventListener('click', () => setTweak('showPrincipal', +b.dataset.show)));
 document.querySelectorAll('#scale-seg button').forEach(b => b.addEventListener('click', () => setTweak('yScale', b.dataset.scale)));
 
-window.addEventListener('message', (e) => {
-  if (!e.data || typeof e.data !== 'object') return;
-  if (e.data.type === '__activate_edit_mode') document.getElementById('tweaks').classList.add('on');
-  if (e.data.type === '__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('on');
+// Press "t" to toggle tweaks panel
+document.addEventListener('keydown', (e) => {
+  if (e.key === 't' && !e.metaKey && !e.ctrlKey && !e.altKey &&
+      !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    document.getElementById('tweaks').classList.toggle('on');
+  }
 });
-try { window.parent.postMessage({type: '__edit_mode_available'}, '*'); } catch(e) {}
 
 // ============== INIT ==============
 applyTweaks();

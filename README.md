@@ -1,25 +1,29 @@
-# CODING AGENTS: READ THIS FIRST
+# 退休資產計算器
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+Retirement Wealth Projection — an interactive calculator that models long-term asset accumulation from five inputs and highlights key milestones.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+## Features
 
-## What you should do — IMPORTANT
+- **Five sliders**: current age, existing assets, monthly investment, annual return rate, retirement age
+- **Live SVG chart**: area + curve showing total asset growth vs. principal-only contributions
+- **Milestone markers**: when assets cross 1,000萬 / 3,000萬 / 5,000萬 / 1億
+- **Age checkpoints**: projected asset value at age 40 / 50 / 60
+- **Retirement marker**: vertical line at target retirement age with the projected amount
+- **Tweaks panel** (press `t`): accent color, chart style (area/line), principal line, linear/log Y-axis
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+## Assumptions
 
-**Read `project/retirement-calculator.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+- Monthly compounding at the specified annual rate
+- Inflation and taxes are not modeled
+- For planning reference only
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Stack
 
-## About the design files
+Pure HTML + CSS + vanilla JS. No build step. No dependencies except Google Fonts (Fraunces, IBM Plex Mono, Inter).
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## Local preview
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
-
-## Bundle contents
-
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `退休計算器` project files (HTML prototypes, assets, components)
+```
+python3 -m http.server 8000
+# open http://localhost:8000
+```
