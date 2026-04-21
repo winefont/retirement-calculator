@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>退休資產計算器</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -378,6 +379,87 @@
     color: var(--ink-muted);
   }
   .seg button.on { background: var(--ink); color: var(--bg); }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 900px) {
+    html, body { height: auto; }
+    body { overflow: auto; }
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      height: auto;
+      width: 100%;
+    }
+    .panel {
+      border-right: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 20px 18px 24px;
+      overflow-y: visible;
+    }
+    .brand { margin-bottom: 16px; padding-bottom: 14px; }
+    .slider-group { padding: 14px 0; }
+    input[type="range"] { height: 4px; }
+    input[type="range"]::-webkit-slider-thumb {
+      width: 22px; height: 22px;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 22px; height: 22px;
+    }
+    .footer-note { margin-top: 20px; padding-top: 16px; }
+
+    .canvas {
+      padding: 20px 18px 24px;
+      overflow: visible;
+    }
+    .canvas-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+    }
+    .big-number { font-size: 40px; }
+    .big-number .unit-big { font-size: 18px; }
+    .headline-right {
+      gap: 0;
+      width: 100%;
+      justify-content: space-between;
+      text-align: left;
+    }
+    .stat { text-align: left; flex: 1; }
+    .stat-value { font-size: 18px; }
+
+    .chart-wrap {
+      height: 320px;
+      flex: none;
+      margin-bottom: 16px;
+    }
+
+    .legend-row {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .milestone-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tweaks {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      width: auto;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .panel { padding: 16px 14px 20px; }
+    .canvas { padding: 16px 14px 20px; }
+    .brand-title { font-size: 20px; }
+    .slider-value { font-size: 18px; }
+    .big-number { font-size: 34px; }
+    .chart-wrap { height: 280px; }
+    .milestone-list { grid-template-columns: 1fr 1fr; }
+  }
 
 </style>
 </head>
