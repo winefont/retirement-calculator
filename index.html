@@ -492,8 +492,8 @@
         <span class="slider-label">現有資產</span>
         <span class="slider-value"><span id="v-assets">100</span><span class="unit">萬</span></span>
       </div>
-      <input type="range" id="s-assets" min="0" max="1000" value="100" step="10">
-      <div class="slider-scale"><span>0</span><span>500萬</span><span>1000萬</span></div>
+      <input type="range" id="s-assets" min="0" max="3000" value="100" step="10">
+      <div class="slider-scale"><span>0</span><span>1500萬</span><span>3000萬</span></div>
     </div>
 
     <div class="slider-group">
@@ -501,8 +501,8 @@
         <span class="slider-label">每月投資</span>
         <span class="slider-value"><span id="v-monthly">3</span><span class="unit">萬 / 月</span></span>
       </div>
-      <input type="range" id="s-monthly" min="1" max="20" value="3" step="0.5">
-      <div class="slider-scale"><span>1</span><span>10萬</span><span>20萬</span></div>
+      <input type="range" id="s-monthly" min="0" max="20" value="3" step="0.5">
+      <div class="slider-scale"><span>0</span><span>10萬</span><span>20萬</span></div>
     </div>
 
     <div class="slider-group">
@@ -618,8 +618,9 @@ let tweaks = {...TWEAK_DEFAULTS};
 // ============== CALCULATION ==============
 function simulate(age, assets0, monthly, ratePct, retireAge) {
   // assets0: 萬, monthly: 萬/月, rate: annual %
-  // monthly compounding
-  const r = ratePct / 100 / 12;
+  // Convert effective annual return to an equivalent monthly rate,
+  // then add each month's contribution at the end of the month.
+  const r = Math.pow(1 + ratePct / 100, 1 / 12) - 1;
   const points = []; // {age, value (萬), principalOnly (萬)}
   let value = assets0;
   let principal = assets0;
@@ -679,8 +680,9 @@ function formatWan(val) {
 
 function formatAge(age) {
   if (age == null) return null;
-  const years = Math.floor(age);
-  const months = Math.round((age - years) * 12);
+  const totalMonths = Math.round(age * 12);
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
   return { years, months };
 }
 
@@ -691,25 +693,23 @@ const MILESTONES = [
   { val: 5000, label: '5000萬' },
   { val: 10000, label: '1億' }
 ];
-const AGE_POINTS = [40, 50, 60];
+const AGE_POINTS = [40, 50, 60, 70];
 
 function render() {
   const age = +document.getElementById('s-age').value;
   const assets0 = +document.getElementById('s-assets').value;
   const monthly = +document.getElementById('s-monthly').value;
   const ratePct = +document.getElementById('s-return').value;
-  const retireAge = +document.getElementById('s-retire').value;
+  const retireSlider = document.getElementById('s-retire');
+  retireSlider.min = Math.max(50, age + 1);
+  if (+retireSlider.value < +retireSlider.min) retireSlider.value = retireSlider.min;
+  const retireAge = +retireSlider.value;
 
   document.getElementById('v-age').textContent = age;
   document.getElementById('v-assets').textContent = assets0;
   document.getElementById('v-monthly').textContent = monthly.toFixed(monthly % 1 === 0 ? 0 : 1);
   document.getElementById('v-return').textContent = ratePct.toFixed(1);
   document.getElementById('v-retire').textContent = retireAge;
-
-  // ensure retire > age
-  if (retireAge <= age) {
-    document.getElementById('s-retire').min = Math.max(50, age + 1);
-  }
 
   const points = simulate(age, assets0, monthly, ratePct, retireAge);
   const retireValue = valueAtAge(points, retireAge) || 0;
@@ -838,7 +838,7 @@ function drawChart(points, startAge, retireAge) {
 
   // Age points
   AGE_POINTS.forEach(a => {
-    if (a <= startAge || a > endAge) return;
+    if (a < startAge || a > endAge) return;
     const val = valueAtAge(points, a);
     if (val == null) return;
     const ax = x(a), ay = y(val);
@@ -890,18 +890,6 @@ function drawAgePoints(points, startAge) {
     }
     html += `</div>`;
   });
-  // Add retirement as 4th
-  const retireAge = +document.getElementById('s-retire').value;
-  const rVal = valueAtAge(points, retireAge);
-  html += `<div class="mile" style="border-color: var(--crimson); background: oklch(98% 0.02 25);">`;
-  html += `<div class="mile-target" style="color: var(--crimson);">▸ 退休 ${retireAge} 歲</div>`;
-  if (rVal == null) {
-    html += `<div class="mile-val muted">—</div>`;
-  } else {
-    const f = formatWan(rVal);
-    html += `<div class="mile-val">${f.num}<span class="sub">${f.unit}</span></div>`;
-  }
-  html += `</div>`;
   container.innerHTML = html;
 }
 
